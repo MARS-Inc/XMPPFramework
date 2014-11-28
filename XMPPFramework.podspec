@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   s.name = 'XMPPFramework'
   s.version = '3.6.4'
-  s.license = 'BSD'
+  s.license = { :type => 'BSD', :file => 'copying.txt' }
   s.summary = 'An XMPP Framework in Objective-C for the Mac / iOS development community.'
   s.homepage = 'https://github.com/robbiehanson/XMPPFramework'
   s.author = { 'Robbie Hanson' => 'robbiehanson@deusty.com' }
@@ -18,36 +18,25 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '5.0'
   s.osx.deployment_target = '10.7'
   s.default_subspec = 'Core'
-
+  s.prepare_command = "echo '#import \"XMPP.h\"' > XMPPFramework.h\n grep '#define _XMPP_' -r Extensions \\\n | tr '-' '_' \\\n | perl -pe 's/Extensions\\/([A-z0-9_]*)\\/([A-z]*.h).*/\\n#ifdef HAVE_XMPP_SUBSPEC_\\U\\1\\n\\E#import \"\\2\"\\n#endif/' \\\n >> XMPPFramework.h\n"
+  s.xcconfig = { 'HEADER_SEARCH_PATHS' => '$(SDKROOT)/usr/include/libxml2 $(SDKROOT)/usr/include/libresolv' }
+  
   s.subspec 'Core' do |ss|
-    ss.prepare_command = "echo '#import \"XMPP.h\"' > XMPPFramework.h\n grep '#define _XMPP_' -r Extensions \\\n | tr '-' '_' \\\n | perl -pe 's/Extensions\\/([A-z0-9_]*)\\/([A-z]*.h).*/\\n#ifdef HAVE_XMPP_SUBSPEC_\\U\\1\\n\\E#import \"\\2\"\\n#endif/' \\\n >> XMPPFramework.h\n"
-    ss.source_files = "XMPPFramework.h", "Core/**/*.{h,m}", "Vendor/libidn/*.h"
-    ss.resources = "**/*.{xcdatamodel,xcdatamodeld}"
-    ss.vendored_libraries = "Vendor/libidn/libidn.a"
-    ss.libraries = "xml2", "resolv"
+    
+    ss.source_files = "XMPPFramework.h", "Core/**/*.{h,m}", "Vendor/libidn/*.h", 'Authentication/**/*.{h,m}', 'Categories/**/*.{h,m}', 'Utilities/**/*.{h,m}'
+    ss.resources = '**/*.{xcdatamodel,xcdatamodeld}'
+    ss.vendored_libraries = 'Vendor/libidn/libidn.a'
+    ss.libraries = 'xml2', 'resolv'
 
     ss.dependency 'CocoaLumberjack','~>1.6.2'
     ss.dependency 'CocoaAsyncSocket','~>7.3.1'
+    ss.ios.dependency 'XMPPFramework/KissXML'
+  end
 
-    ss.xcconfig = { 'HEADER_SEARCH_PATHS' => '$(SDKROOT)/usr/include/libxml2 $(SDKROOT)/usr/include/libresolv' }
-
-    ss.subspec 'Authentication' do |sss|
-      sss.source_files =  'Authentication/**/*.{h,m}'
-      sss.ios.dependency 'XMPPFramework/Core/KissXML'
-    end
-
-    ss.subspec 'Categories' do |sss|
-      sss.source_files =  'Categories/**/*.{h,m}'
-    end
-
-    ss.subspec 'Utilities' do |sss|
-      sss.source_files =  'Utilities/**/*.{h,m}'
-    end
-  
-    ss.subspec 'KissXML' do |sss|
-      sss.platform = :ios
-      sss.source_files = 'Vendor/KissXML/**/*.{h,m}'
-    end
+  s.subspec 'KissXML' do |ss|
+    ss.platform = :ios
+    ss.source_files = 'Vendor/KissXML/**/*.{h,m}'
+    ss.libraries = "xml2"
   end
 
   s.subspec 'BandwidthMonitor' do |ss|
@@ -61,6 +50,13 @@ Pod::Spec.new do |s|
     ss.framework  = 'CoreData'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_COREDATASTORAGE'
     ss.dependency 'XMPPFramework/Core'
+  end
+
+  s.subspec 'FileTransfer' do |ss|
+    ss.source_files = 'Extensions/FileTransfer/**/*.{h,m}'
+    ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_FILETRANSFER'
+    ss.dependency 'XMPPFramework/Core'
+    ss.dependency 'XMPPFramework/XEP-0065'
   end
 
   s.subspec 'GoogleSharedStatus' do |ss|
@@ -85,12 +81,12 @@ Pod::Spec.new do |s|
   s.subspec 'Roster' do |ss|
     ss.source_files = 'Extensions/Roster/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_ROSTER'
-    ss.dependency 'XMPPFramework/Core'
     ss.dependency 'XMPPFramework/CoreDataStorage'
     ss.dependency 'XMPPFramework/XEP-0203'
   end
   
   s.subspec 'SystemInputActivityMonitor' do |ss|
+    ss.platform = :osx
     ss.source_files = 'Extensions/SystemInputActivityMonitor/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_SYSTEMINPUTACTIVITYMONITOR'
     ss.dependency 'XMPPFramework/Core'
@@ -117,18 +113,15 @@ Pod::Spec.new do |s|
   s.subspec 'XEP-0045' do |ss|
     ss.source_files = 'Extensions/XEP-0045/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0045'
-    ss.dependency 'XMPPFramework/Core'
     ss.dependency 'XMPPFramework/CoreDataStorage'
     ss.dependency 'XMPPFramework/XEP-0203'
   end
 
   s.subspec 'XEP-0054' do |ss|
-    ss.source_files = 'Extensions/XEP-0054/**/*.{h,m}'
+    ss.source_files = 'Extensions/XEP-0054/**/*.{h,m}', 'Extensions/XEP-0153/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0054'
     ss.framework = 'CoreLocation'
-    ss.dependency 'XMPPFramework/Core'
     ss.dependency 'XMPPFramework/Roster'
-    # ss.dependency 'XMPPFramework/XEP-0153'
   end
 
   s.subspec 'XEP-0059' do |ss|
@@ -152,6 +145,12 @@ Pod::Spec.new do |s|
   s.subspec 'XEP-0066' do |ss|
     ss.source_files = 'Extensions/XEP-0066/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0066'
+    ss.dependency 'XMPPFramework/Core'
+  end
+
+  s.subspec 'XEP-0077' do |ss|
+    ss.source_files = 'Extensions/XEP-0077/**/*.{h,m}'
+    ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0077'
     ss.dependency 'XMPPFramework/Core'
   end
 
@@ -188,25 +187,22 @@ Pod::Spec.new do |s|
   s.subspec 'XEP-0115' do |ss|
     ss.source_files = 'Extensions/XEP-0115/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0115'
-    ss.dependency 'XMPPFramework/Core'
     ss.dependency 'XMPPFramework/CoreDataStorage'
   end
 
   s.subspec 'XEP-0136' do |ss|
     ss.source_files = 'Extensions/XEP-0136/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0136'
-    ss.dependency 'XMPPFramework/Core'
     ss.dependency 'XMPPFramework/CoreDataStorage'
     ss.dependency 'XMPPFramework/XEP-0203'
     ss.dependency 'XMPPFramework/XEP-0085'
   end
 
   s.subspec 'XEP-0153' do |ss|
-    ss.source_files = 'Extensions/XEP-0153/**/*.{h,m}'
+    ss.source_files = 'Extensions/XEP-0054/**/*.{h,m}', 'Extensions/XEP-0153/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0153'
-    ss.dependency 'XMPPFramework/Core'
-    ss.dependency 'XMPPFramework/CoreDataStorage'
-    ss.dependency 'XMPPFramework/XEP-0054'
+    ss.framework = 'CoreLocation'
+    ss.dependency 'XMPPFramework/Roster'
   end
 
   s.subspec 'XEP-0172' do |ss|
@@ -221,6 +217,18 @@ Pod::Spec.new do |s|
     ss.dependency 'XMPPFramework/Core'
   end
 
+  s.subspec 'XEP-0191' do |ss|
+    ss.source_files = 'Extensions/XEP-0191/**/*.{h,m}'
+    ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0191'
+    ss.dependency 'XMPPFramework/Core'
+  end
+
+  s.subspec 'XEP-0198' do |ss|
+    ss.source_files = 'Extensions/XEP-0198/**/*.{h,m}'
+    ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0198'
+    ss.dependency 'XMPPFramework/Core'
+  end
+
   s.subspec 'XEP-0199' do |ss|
     ss.source_files = 'Extensions/XEP-0199/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0199'
@@ -230,14 +238,12 @@ Pod::Spec.new do |s|
   s.subspec 'XEP-0202' do |ss|
     ss.source_files = 'Extensions/XEP-0202/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0202'
-    ss.dependency 'XMPPFramework/Core'
     ss.dependency 'XMPPFramework/XEP-0082'
   end
    
   s.subspec 'XEP-0203' do |ss|
     ss.source_files = 'Extensions/XEP-0203/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0203'
-    ss.dependency 'XMPPFramework/Core'
     ss.dependency 'XMPPFramework/XEP-0082'
   end
 
@@ -257,12 +263,12 @@ Pod::Spec.new do |s|
     ss.source_files = 'Extensions/XEP-0280/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0280'
     ss.dependency 'XMPPFramework/Core'
+    ss.dependency 'XMPPFramework/XEP-0297'
   end
 
   s.subspec 'XEP-0297' do |ss|
     ss.source_files = 'Extensions/XEP-0297/**/*.{h,m}'
     ss.prefix_header_contents = '#define HAVE_XMPP_SUBSPEC_XEP_0297'
-    ss.dependency 'XMPPFramework/Core'
     ss.dependency 'XMPPFramework/XEP-0203'
   end
 
