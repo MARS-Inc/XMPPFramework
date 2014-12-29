@@ -29,7 +29,7 @@ Pod::Spec.new do |s|
     ss.libraries = 'xml2', 'resolv'
 
     ss.dependency 'CocoaLumberjack', '~>1.9'
-    ss.dependency 'CocoaAsyncSocket','~>7.3' #update to 7.4 when it get pushed to trunk
+    ss.dependency 'CocoaAsyncSocket','~>7.4'
     ss.ios.dependency 'XMPPFramework/KissXML'
   end
 
